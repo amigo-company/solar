@@ -84,7 +84,7 @@ def run():
                         m.mouse_button(ie['x'], ie['y'], ie['button'])
                 elif ie['event'] == tl.INPUT_MOUSE_WHEEL:
                     for m in modules:
-                        m.mouse_scroll(ie['x'], ie['y'], ie['button'])
+                        m.mouse_scroll(ie['x'], ie['y'], 1 if ie['button'] == tl.INPUT_MOUSE_WHEEL_DOWN else -1)
             elif ie['type'] == tl.INPUT_KEYBOARD:
                 for m in modules:
                     m.keyboard(ie['key'], ie['press'], ie['keycode'])
@@ -96,6 +96,6 @@ def run():
         time.sleep(max(0, _ftime - (sum(_time_elapsed_samples) / _TIME_ELAPSED_SAMPLE_COUNT)))
         _time_elapsed_ptr = (_time_elapsed_ptr +1) % _TIME_ELAPSED_SAMPLE_COUNT
     
+    print(f"{tl.move(0, 0)}{tl.ANSI_RESET}", end='')
     tl.show_cursor()
     tl.clear_screen()
-    print(f"{tl.move(0, 1)}{tl.ANSI_RESET}", end='')

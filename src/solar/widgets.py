@@ -30,7 +30,7 @@ class _IButton_(Module):
         self.text = text
         self.x = x
         self.y = y
-        self.call = lambda: None
+        self.action = lambda: None
         self.fgd = ColorHint(DEFAULT_FGD, DEFAULT_FGD_HOVER, DEFAULT_FGD_ACTIVE)
         self.bgd = ColorHint(DEFAULT_BGD, DEFAULT_BGD_HOVER, DEFAULT_BGD_ACTIVE)
         self._pressed = False
@@ -54,7 +54,7 @@ class TextButton(_IButton_):
         self.fgd.active = pressed
 
         if not pressed and self._pressed:
-            self.call()
+            self.action()
         self._pressed = pressed
 
     def update(self):
@@ -70,6 +70,9 @@ class RaisedButton(_IButton_):
 
     def _check_bounds(self, x: int, y: int) -> bool:
         return self.x <= x < self.x + len(self.text) +2 and self.y <= y < self.y +3
+    
+    def get_size(self) -> tuple[int, int]:
+        return len(self.text) +2, 4
 
     def mouse_move(self, x, y):
         bounds = self._check_bounds(x, y)
@@ -83,7 +86,7 @@ class RaisedButton(_IButton_):
         self.bgd.active = pressed
         self.bevel.active = pressed
         if not pressed and self._pressed:
-            self.call()
+            self.action()
         self._pressed = pressed
 
     def update(self):
@@ -110,6 +113,8 @@ class _IList_(Module):
         self.y = y
         self.width = width
         self.height = height
+        self.scroll_x = 0
+        self.scroll_y = 0
 
         self.fgd = ColorHint(DEFAULT_FGD, DEFAULT_FGD_HOVER, DEFAULT_FGD_ACTIVE)
         self.bgd = ColorHint(tl.ANSI_RESET, DEFAULT_BGD_HOVER, DEFAULT_BGD_ACTIVE)
@@ -127,23 +132,35 @@ class ItemSelectList(_IList_):
         super().__init__(items, x, y, width, height)
         
     def mouse_move(self, x, y):
-        self.hover_item = (y - self.y) if self._check_bounds(x, y) else -1
+        self.hover_item = (y - self.y +self.scroll_y) if self._check_bounds(x, y) else -1
 
     def mouse_button(self, x, y, button):
         if button == 1 and self._check_bounds(x, y):
-            self.active_item = (y - self.y)
+            self.active_item = (y - self.y +self.scroll_y)
             if self.active_item > (len(self.items) -1):
                 self.active_item = -1
 
+    def mouse_scroll(self, x, y, direction):
+        if self._check_bounds(x, y):
+            self.scroll_y += direction
+        self.scroll_y = max(0, min(len(self.items) -1, self.scroll_y))
+
     def update(self):
+        print(tl.ANSI_RESET + tl.fgd(255, 255, 255), end='')
+        tl.draw_box(self.x -1, self.y -1, self.width +1, self.height +1)
+
         draw = ''
-        for i, item in enumerate(self.items):
-            on_hover, on_active = i == self.hover_item, i == self.active_item
+        for y in range(self.height -1):
+            id = y + self.scroll_y
+            item = self.items[id] if id < len(self.items) else ''
+            
+            on_hover, on_active = id == self.hover_item, id == self.active_item
             self.bgd.hover, self.fgd.hover = on_hover, on_hover
             self.bgd.active, self.fgd.active = on_active, on_active
 
-            padding = ' ' * max(0, self.width - len(item))
-            draw += f"{tl.move(self.x, self.y +i)}{self.bgd.get_color()}{self.fgd.get_color()}{item}{padding}"
+            padding = ' ' * max(0, self.width - len(item) -1)
+            draw += f"{tl.move(self.x, self.y +y)}{self.bgd.get_color()}{self.fgd.get_color()}{item}{padding}"
+
         print(draw, end='')
 
     
