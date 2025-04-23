@@ -4,7 +4,10 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))) # prioritize loca
 from datetime import datetime
 from solar import interface
 from solar import terminal as tl
-from solar.widgets import TextButton, RaisedButton
+from solar.widgets import (
+    TextButton, RaisedButton,
+    ItemSelectList
+)
 
 class Control(interface.Module):
     def __init__(self):
@@ -40,6 +43,9 @@ if __name__ == '__main__':
 
     raised_button = RaisedButton(" Click me! ", 2, 10)
     interface.register_module(raised_button)
+
+    item_select_list = ItemSelectList(['foo', 'baar'], x=50, y=1, width=20, height=10)
+    interface.register_module(item_select_list)
 
     interface.set_framerate(20)
     interface.run()

@@ -11,11 +11,11 @@ DEFAULT_FGD_ACTIVE = tl.fgd(10, 10, 10)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Color Hint
-class _ColorHint_:
-    def __init__(self):
-        self.color: str = ''
-        self.color_hover: str = ''
-        self.color_active: str = ''
+class ColorHint:
+    def __init__(self, col: str = '', col_hover: str = '', col_active: str = ''):
+        self.color: str = col
+        self.color_hover: str = col_hover
+        self.color_active: str = col_active
         self.hover: bool = False
         self.active: bool = False
 
@@ -31,14 +31,8 @@ class _IButton_(Module):
         self.x = x
         self.y = y
         self.call = lambda: None
-        self.fgd = _ColorHint_()
-        self.bgd = _ColorHint_()
-        self.fgd.color = DEFAULT_FGD
-        self.fgd.color_hover = DEFAULT_FGD_HOVER
-        self.fgd.color_active = DEFAULT_FGD_ACTIVE
-        self.bgd.color = DEFAULT_BGD
-        self.bgd.color_hover = DEFAULT_BGD_HOVER
-        self.bgd.color_active = DEFAULT_BGD_ACTIVE
+        self.fgd = ColorHint(DEFAULT_FGD, DEFAULT_FGD_HOVER, DEFAULT_FGD_ACTIVE)
+        self.bgd = ColorHint(DEFAULT_BGD, DEFAULT_BGD_HOVER, DEFAULT_BGD_ACTIVE)
         self._pressed = False
 
 
@@ -72,11 +66,7 @@ class TextButton(_IButton_):
 class RaisedButton(_IButton_):
     def __init__(self, text: str = "", x: int = 0, y: int = 0):
         super().__init__(text, x, y)
-        self.bevel = _ColorHint_()
-        self.bevel.color = tl.fgd(60, 60, 60)
-        self.bevel.color_hover = tl.fgd(100, 100, 100)
-        self.bevel.color_active = tl.fgd(240, 240, 240)
-
+        self.bevel = ColorHint(tl.fgd(60, 60, 60), tl.fgd(100, 100, 100), tl.fgd(240, 240, 240))
 
     def _check_bounds(self, x: int, y: int) -> bool:
         return self.x <= x < self.x + len(self.text) +2 and self.y <= y < self.y +3
@@ -111,29 +101,49 @@ class RaisedButton(_IButton_):
         print(draw, end="")
 
 
-
-
 # ----------------------------------------------------------------------------------------------------------------------
 # Lists
-# class __IList__(Module):
-#     def __init__(self, items: list):
-#         self.items = items
-#         self.padding: int = 0
+class _IList_(Module):
+    def __init__(self, items: list, x: int, y: int, width: int, height: int):
+        self.items = items
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
 
+        self.fgd = ColorHint(DEFAULT_FGD, DEFAULT_FGD_HOVER, DEFAULT_FGD_ACTIVE)
+        self.bgd = ColorHint(tl.ANSI_RESET, DEFAULT_BGD_HOVER, DEFAULT_BGD_ACTIVE)
+        self.hover_item = -1
+        self.active_item = -1
 
-# class ItemSelectList(__IList__):
-#     def __init__(self, items: list = []):
-#         super().__init__(items)
-#         self.background = tl.ANSI_RESET
-#         self.background_hover = tl.bgd(128, 128, 128)
-#         self.background_active = tl.bgd(255, 255, 255)
-
-#         self.foreground = tl.fgd(255, 255, 255)
-#         self.foreground_acrive = tl.fgd(10, 10, 10)
-
-#         self._bgd = self.background
-#         self._fgd = self.foreground
-
+    def _check_bounds(self, x: int, y: int) -> bool:
+        return (self.x <= x < self.x + self.width) and (self.y <= y < self.y + self.height)
     
+    def get_item(self):
+        return self.items[self.active_item]
+
+class ItemSelectList(_IList_):
+    def __init__(self, items: list, x: int, y: int, width: int, height: int):
+        super().__init__(items, x, y, width, height)
+        
+    def mouse_move(self, x, y):
+        self.hover_item = (y - self.y) if self._check_bounds(x, y) else -1
+
+    def mouse_button(self, x, y, button):
+        if button == 1 and self._check_bounds(x, y):
+            self.active_item = (y - self.y)
+            if self.active_item > (len(self.items) -1):
+                self.active_item = -1
+
+    def update(self):
+        draw = ''
+        for i, item in enumerate(self.items):
+            on_hover, on_active = i == self.hover_item, i == self.active_item
+            self.bgd.hover, self.fgd.hover = on_hover, on_hover
+            self.bgd.active, self.fgd.active = on_active, on_active
+
+            padding = ' ' * max(0, self.width - len(item))
+            draw += f"{tl.move(self.x, self.y +i)}{self.bgd.get_color()}{self.fgd.get_color()}{item}{padding}"
+        print(draw, end='')
 
     
