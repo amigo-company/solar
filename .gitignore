@@ -1,3 +1,8 @@
 *.pyc
 *.exe
 *.spec
+ignore.*
+__pycache__
+build
+dist
+solar.egg-info

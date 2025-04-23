@@ -1,4 +1,4 @@
-from core import terminal as tl
+from . import terminal as tl
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Module class
@@ -13,7 +13,7 @@ class Module:
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Globals
-width, height = tl.size()
+width, height = 1, 1
 modules: list[Module] = []
 running = True
 
@@ -65,11 +65,12 @@ def run():
     tl.clear_screen()
     while running:
         t0 = datetime.now()
-        print(tl.move(0, 0)) # no end='' to flush the buffer
+        print(tl.move(0, 0) + tl.ANSI_RESET) # no end='' to flush the buffer
 
         _w, _h = tl.size()
         if width != _w or height != _h:
             width, height = _w, _h
+            tl.clear_screen()
             for m in modules:
                 m.resize(width, height)
 
